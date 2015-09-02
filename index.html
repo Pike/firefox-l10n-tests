@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Firefox 42 UI tests</title>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+        <style type="text/css">
+            #locales > a, #files > a {
+                margin-right: 5px;
+                color: blue;
+            }
+            .highlighted {
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <title>Firefox 42 UI tests</title>
+        <div id="locales"></div>
+        <div id="files"></div>
+        <div id="image"></div>
+        <script type="text/javascript">
+jQuery.extend( {
+    getQueryParameters: function(str) {
+        str = str || document.location.search;
+        if (!str || str==='?')
+            return {};
+        return (str || document.location.search).replace(/(^\?)/, '').split("&").map(function(n) {
+            return n = n.split("="), this[n[0]] = unescape(n[1]), this;
+        }
+        .bind({}))[0];
+    }
+}
+
+);
+var data;
+var query = $.getQueryParameters();
+$.getJSON('data.json').done(function(_data) {
+    data = _data;
+    var locq = Object.create(query);
+    data.locales.forEach(function(loc) {
+        locq.locale = loc;
+        $('<a>').text(loc).attr('href', '?' + $.param(locq)).appendTo("#locales");
+    });
+    var fq = Object.create(query);
+    data.files.forEach(function(file) {
+        fq.file = file;
+        $('<a>').text(file).attr('href', '?' + $.param(fq)).appendTo("#files");
+    });
+    if (query.locale && query.file) {
+        var platform = query.locale==='ja-JP-mac' ? 'darwin' : 'winnt';
+        $("#image").empty().append($('<img>').attr('src', query.locale + '/' + platform + '/' + query.file));
+        $(document).keypress(function(e) {
+            var direction = 1, prop, lst, current;
+            switch (e.key) {
+                case 'ArrowLeft':
+                    direction = -1;
+                case 'ArrowRight':
+                    prop = 'locale';
+                    lst = data.locales;
+                    current = query.locale;
+                    break;
+                case 'ArrowUp':
+                    direction = -1;
+                case 'ArrowDown':
+                    prop = 'file';
+                    lst = data.files;
+                    current = query.file;
+                    break;
+                default:
+                    return;
+            }
+            var idx = lst.indexOf(current);
+            if (!lst[idx + direction])
+                return;
+            query[prop] = lst[idx + direction];
+            window.location = '?' + $.param(query);
+        });
+    }
+});
+        </script>
+    </body>
+</html>
